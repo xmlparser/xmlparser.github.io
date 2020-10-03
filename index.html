@@ -9,11 +9,23 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.0/css/bootstrap.min.css">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap">
+	<link rel="stylesheet" href="css/codemirror.css">
     <style>
       font-family: 'Montserrat', sans-serif;
+	  html, body: {height:100%; width: 100%;} 
+	  .CodeMirror-cursor, #form > div > div:nth-child(1){
+		left: 0px !important;
+	  }
+	  #form > div{
+	      right: 0px;
+		position: absolute;
+		left: 0px;
+		top: initial;
+		bottom: initial;
+	  }
     </style>
     <link rel="stylesheet" href="css/styles.css?v=1.0">
-
+	
 </head>
 
 <body>
@@ -27,7 +39,7 @@
 
             <ul class="list-unstyled components">
                 <p>Tools</p>
-                <li class="active">
+                <li  >
                     <a href="#homeSubmenu" data-toggle="collapse" aria-expanded="false" class="dropdown-toggle">Tag </a>
                     <ul class="collapse list-unstyled" id="homeSubmenu">
                         <li>
@@ -35,12 +47,15 @@
                         </li>
                     </ul>
                 </li> 
+                <li  >
+                    <a id="prettify" href="#" class="dropdown-toggle">Prettify </a> 
+                </li> 
             </ul>
 
           
         </nav>
 
-        <div id="content">
+        <div id="content" style="display: flex;flex-direction: column; ">
 
             <nav class="navbar navbar-expand-lg navbar-light bg-light">
                 <div class="container-fluid">
@@ -65,20 +80,97 @@
             </nav>
             
             <h2>HTML - XML Parser tool</h2>
-            <p>I love beautifulSoup from python and I need this tool to use it in my projects. However I dont want to create the same code with slight differents over and over for different needs. I always wanted a proper html parser merger tool to create lists, excell files, strip tags or unneeded parts to fix or modify html code. This project I share my tools who need the same with me.</p>
+            <p>Simple JS tool that helps you to strip and parse XML. You can remove tags, prettify, </p>
+			<label for="textarea1">XML Code</label>
+			<form  id ="form" style="flex: auto;position: relative;">
+				<textarea class="form-control" id="textarea1" rows="3" style="    height: 100%;"></textarea >
+			</form>
 
         </div>
     </div>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script> 
-
+	<script src="js/codemirror/codemirror.js"></script>  	
+	<script src="js/codemirror/selection-pointer.js"></script> 
+	<script src="js/codemirror/xml.js"></script> 
+	<script src="js/codemirror/css.js"></script> 
+	<script src="js/codemirror/vbscript.js"></script> 
+	<script src="js/codemirror/javascript.js"></script>
+	<script src="js/codemirror/htmlmixed.js"></script> 
     <script type="text/javascript">
+	var string = '<div class="form-group" id ="form" style="flex: auto;"> </div>'
+	
+function formatFactory(html) {
+    function parse(html, tab = 0) {
+        var tab;
+        var html = $.parseHTML(html);
+        var formatHtml = new String();   
+
+        function setTabs () {
+            var tabs = new String();
+
+            for (i=0; i < tab; i++){
+              tabs += '    ';
+            }
+            return tabs;    
+        };
+
+
+        $.each( html, function( i, el ) {
+            if (el.nodeName == '#text') {
+                if (($(el).text().trim()).length) {
+                    formatHtml += setTabs() + $(el).text().trim() + '\n';
+                }    
+            } else {
+                var innerHTML = $(el).html().trim();
+                $(el).html(innerHTML.replace('\n', '').replace(/ +(?= )/g, ''));
+                
+
+                if ($(el).children().length) {
+                    $(el).html('\n' + parse(innerHTML, (tab + 1)) + setTabs());
+                    var outerHTML = $(el).prop('outerHTML').trim();
+                    formatHtml += setTabs() + outerHTML + '\n'; 
+
+                } else {
+                    var outerHTML = $(el).prop('outerHTML').trim();
+                    formatHtml += setTabs() + outerHTML + '\n';
+                }      
+            }
+        });
+
+        return formatHtml;
+    };   
+    
+    return parse(html.replace(/(\r\n|\n|\r)/gm," ").replace(/ +(?= )/g,''));
+}; 
+	
         $(document).ready(function () {
+ 
+			  			  var options = {
+				name: "htmlmixed",
+				scriptTypes: [{matches: /\/x-handlebars-template|\/x-mustache/i,
+							   mode: null},
+							  {matches: /(text|application)\/(x-)?vb(a|script)/i,
+							   mode: "vbscript"}]
+			  };
+			  var cm = CodeMirror.fromTextArea(document.getElementById("textarea1"), {
+				mode: options,
+				selectionPointer: true,
+				lineNumbers: true,
+				lineWrapping: true
+			  });
+
             $('#sidebarCollapse').on('click', function () {
                 $('#sidebar').toggleClass('active');
                 $(this).toggleClass('active');
+            });
+			
+            $('#prettify').on('click', function () {
+                var html = cm.getValue();
+                var beautify = formatFactory(html);
+				cm.setValue(beautify) ;
             });
         });
     </script>
